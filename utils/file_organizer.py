@@ -21,7 +21,7 @@ class FileOrganizer(QMainWindow):
         # Splitter for Tree View and File View
         splitter = QSplitter(Qt.Horizontal)
         self.folder_view = FolderView(self.folder_selected)
-        self.file_view = EnhancedFileView()
+        self.file_view = FileView()
         splitter.addWidget(self.folder_view)
         splitter.addWidget(self.file_view)
 
