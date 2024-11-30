@@ -9,12 +9,14 @@ class Toolbar:
         self.sort_by_size_btn = QPushButton("Sort by Size")
         self.sort_by_type_btn = QPushButton("Sort by Type")
         self.toggle_order_btn = QPushButton("Toggle Order")
+        self.delete_btn = QPushButton("Delete Selected")
 
         # Add to Layout
         self.layout.addWidget(self.sort_by_name_btn)
         self.layout.addWidget(self.sort_by_size_btn)
         self.layout.addWidget(self.sort_by_type_btn)
         self.layout.addWidget(self.toggle_order_btn)
+        self.layout.addWidget(self.delete_btn)
 
         # Connect Buttons
        
@@ -28,3 +30,5 @@ class Toolbar:
         self.sort_by_type_btn.clicked.connect(lambda: sort_callback(2))
        
         self.toggle_order_btn.clicked.connect(toggle_callback)
+        
+        self.delete_btn.clicked.connect(delete_callback)
