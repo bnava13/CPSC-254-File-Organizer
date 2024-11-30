@@ -21,7 +21,7 @@ class FileOrganizer(QMainWindow):
         # Splitter for Tree View and File View
         splitter = QSplitter(Qt.Horizontal)
         self.folder_view = FolderView(self.folder_selected)
-        self.file_view = FileView()
+        self.file_view = EnhancedFileView()
         splitter.addWidget(self.folder_view)
         splitter.addWidget(self.file_view)
 
@@ -30,7 +30,7 @@ class FileOrganizer(QMainWindow):
         layout.addWidget(splitter)
 
         # Toolbar
-        self.toolbar = Toolbar(self.sort_files, self.toggle_sort_order)
+        self.toolbar = Toolbar(self.sort_files, self.toggle_sort_order, self.delete_selected_files)
         layout.addLayout(self.toolbar.layout)
 
         # Status Bar
@@ -51,3 +51,8 @@ class FileOrganizer(QMainWindow):
         self.sort_order = Qt.DescendingOrder if self.sort_order == Qt.AscendingOrder else Qt.AscendingOrder
         order = "Ascending" if self.sort_order == Qt.AscendingOrder else "Descending"
         self.status_bar.update_status(f"Sorting order changed to {order}")
+
+    def delete_selected_files(self):
+        deleted_count = self.file_view.delete_selected_files()
+        if deleted_count:
+            self.status_bar.update_status(f"Deleted {deleted_count} items")
