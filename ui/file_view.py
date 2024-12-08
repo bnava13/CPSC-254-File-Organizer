@@ -1,9 +1,9 @@
-from PyQt5.QtWidgets import QTableView, QFileSystemModel, QLineEdit, QVBoxLayout, QWidget, QMessageBox
-from PyQt5.QtCore import Qt, QSortFilterProxyModel
+from PyQt5.QtWidgets import QTableView, QFileSystemModel, QMessageBox
+from PyQt5.QtCore import QSortFilterProxyModel, Qt
 import os
 import shutil
 
-class SearchProxyModel(QSortFilterProxyModel):
+class FileProxyModel(QSortFilterProxyModel):
     def __init__(self):
         super().__init__()
         self.search_text = ""
@@ -13,104 +13,81 @@ class SearchProxyModel(QSortFilterProxyModel):
         self.invalidateFilter()
 
     def filterAcceptsRow(self, source_row, source_parent):
+        if not self.search_text:
+            return True
+            
         source_model = self.sourceModel()
         index = source_model.index(source_row, 0, source_parent)
+        filename = source_model.fileName(index).lower()
         
-        # Get file/folder name
-        name = source_model.fileName(index).lower()
-        return self.search_text in name
+        return self.search_text in filename
 
 class FileView(QTableView):
     def __init__(self):
         super().__init__()
         self.file_system_model = QFileSystemModel()
-        self.proxy_model = SearchProxyModel()
+        self.proxy_model = FileProxyModel()
         self.proxy_model.setSourceModel(self.file_system_model)
-        self.setModel(self.proxy_model)
+        self.model = QFileSystemModel()
+        self.setModel(self.model)
+        # Enable multiple selection
         self.setSelectionMode(QTableView.ExtendedSelection)
-
-    def setup_ui(self):
-        layout = QVBoxLayout(self)
-        
-        # Search bar
-        self.search_bar = QLineEdit()
-        self.search_bar.setPlaceholderText("Search files...")
-        self.search_bar.textChanged.connect(self.search_files)
-        layout.addWidget(self.search_bar)
-
-        # File view
-        self.file_system_model = QFileSystemModel()
-        self.proxy_model = SearchProxyModel()
-        self.proxy_model.setSourceModel(self.file_system_model)
-        
-        self.table_view = QTableView()
-        self.table_view.setModel(self.proxy_model)
-        self.table_view.setSelectionMode(QTableView.ExtendedSelection)
-        layout.addWidget(self.table_view)
+        # Show selection by rows
+        self.setSelectionBehavior(QTableView.SelectRows)
 
     def set_folder_path(self, folder_path):
-        self.file_system_model.setRootPath(folder_path)
-        self.table_view.setRootIndex(def set_folder_path(self, folder_path):
-        self.file_system_model.setRootPath(folder_path)
-        self.setRootIndex(
-            self.proxy_model.mapFromSource(
-                self.file_system_model.index(folder_path)
-            )
-        )
-        
+        self.setRootIndex(self.model.setRootPath(folder_path))
+
     def search_files(self, text):
         self.proxy_model.set_search_text(text)
-        
+
     def sort_files(self, column, order):
         self.sortByColumn(column, order)
-        
-    def get_selected_files(self):
-        selected_indexes = self.selectionModel().selectedRows()
-        return [
-            self.file_system_model.filePath(
-                self.proxy_model.mapToSource(index)
-            )
-            for index in selected_indexes
-        ]
-        
+
     def delete_selected_files(self):
-        selected_files = self.get_selected_files()
+        # Get selected indexes
+        selected_rows = self.selectionModel().selectedRows()
         
-        if not selected_files:
-            QMessageBox.warning(self, "Warning", "No files selected")
+        if not selected_rows:
+            QMessageBox.warning(self, "Warning", "No files selected for deletion")
             return 0
-            
+
+        # Confirm deletion
         reply = QMessageBox.question(
             self,
             "Confirm Delete",
-            f"Are you sure you want to delete {len(selected_files)} selected items?",
+            f"Are you sure you want to delete {len(selected_rows)} selected items?",
             QMessageBox.Yes | QMessageBox.No
         )
-        
+
         if reply == QMessageBox.Yes:
-            errors = []
             deleted_count = 0
-            
-            for file_path in selected_files:
+            errors = []
+
+            for index in selected_rows:
+                file_path = self.model.filePath(index)
                 try:
                     if os.path.isfile(file_path):
                         os.remove(file_path)
-                    else:
+                    elif os.path.isdir(file_path):
                         shutil.rmtree(file_path)
                     deleted_count += 1
                 except Exception as e:
                     errors.append(f"Error deleting {file_path}: {str(e)}")
-                    
+
+            # Show results
             if errors:
                 QMessageBox.warning(
                     self,
                     "Delete Results",
-                    f"Deleted {deleted_count} items.\nErrors occurred:\n" + 
-                    "\n".join(errors)
+                    f"Deleted {deleted_count} items\nErrors occurred:\n" + "\n".join(errors)
                 )
+            elif deleted_count > 0:
+                QMessageBox.information(
+                    self,
+                    "Delete Success",
+                    f"Successfully deleted {deleted_count} items"
+                )
+
             return deleted_count
         return 0
-                    f"Deleted {deleted_count} items.\nErrors occurred:\n" + 
-                    "\n".join(errors)
-                )
-            return deleted_count
