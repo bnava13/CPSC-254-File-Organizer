@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QMainWindow, QVBoxLayout, QSplitter, QWidget
+from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt
 from ui.folder_view import FolderView
 from ui.file_view import FileView
@@ -30,7 +31,7 @@ class FileOrganizer(QMainWindow):
         layout.addWidget(splitter)
 
         # Toolbar
-        self.toolbar = Toolbar(self.sort_files, self.toggle_sort_order, self.delete_selected_files, self.search_callback=self.search_files)
+        self.toolbar = Toolbar(self.sort_files, self.toggle_sort_order, self.delete_selected_files)
         layout.addLayout(self.toolbar.layout)
 
         # Status Bar
@@ -51,12 +52,16 @@ class FileOrganizer(QMainWindow):
         self.sort_order = Qt.DescendingOrder if self.sort_order == Qt.AscendingOrder else Qt.AscendingOrder
         order = "Ascending" if self.sort_order == Qt.AscendingOrder else "Descending"
         self.status_bar.update_status(f"Sorting order changed to {order}")
-
-    def search_files(self, search_text):
-        self.file_view.search_files(search_text)
-        self.status_bar.update_status(f"Searching for: {search_text}")
+        
+    def search_files(self, text):
+        # Call the search method in FileView
+        self.file_view.search_files(text)
+        self.status_bar.update_status(f"Searching for: {text}")
 
     def delete_selected_files(self):
         deleted_count = self.file_view.delete_selected_files()
-        if deleted_count:
+        if deleted_count > 0:
             self.status_bar.update_status(f"Deleted {deleted_count} items")
+        else:
+            self.status_bar.update_status("No files were deleted")
+
