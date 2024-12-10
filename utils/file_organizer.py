@@ -32,6 +32,7 @@ class FileOrganizer(QMainWindow):
 
         # Toolbar
         self.toolbar = Toolbar(self.sort_files, self.toggle_sort_order, self.delete_selected_files)
+        self.toolbar.search_bar.textChanged.connect(self.search_files)
         layout.addLayout(self.toolbar.layout)
 
         # Status Bar
@@ -41,7 +42,11 @@ class FileOrganizer(QMainWindow):
     def folder_selected(self, folder_path):
         self.file_view.set_folder_path(folder_path)
         self.status_bar.update_status(f"Current Folder: {folder_path}")
-
+    
+        # Clear search if it's active
+        if self.file_view.is_searching:
+            self.file_view.search_files("")
+        
     def sort_files(self, column):
         self.file_view.sort_files(column, self.sort_order)
         column_name = ["Name", "Size", "Type"][column]
@@ -54,9 +59,11 @@ class FileOrganizer(QMainWindow):
         self.status_bar.update_status(f"Sorting order changed to {order}")
         
     def search_files(self, text):
-        # Call the search method in FileView
         self.file_view.search_files(text)
-        self.status_bar.update_status(f"Searching for: {text}")
+        if text:
+            self.status_bar.update_status(f"Searching for: {text}")
+        else:
+            self.status_bar.update_status("Search cleared")
 
     def delete_selected_files(self):
         deleted_count = self.file_view.delete_selected_files()
@@ -64,4 +71,5 @@ class FileOrganizer(QMainWindow):
             self.status_bar.update_status(f"Deleted {deleted_count} items")
         else:
             self.status_bar.update_status("No files were deleted")
+
 
